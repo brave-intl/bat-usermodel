@@ -3,214 +3,9 @@ const util = require('util')
 const stemmer = require('porter-stemmer').stemmer
 
 const maxWords = 1234 // seems reasonable
-const maxRowsInPageScoreHistory = 4
-const visitsToSimulate = 3
-
-let naiveBayesPriors                    // vector values in prior.json
-let naiveBayesMatrix
-let inMemoryPageScoreHistory
 
 let priorFileLocation = './prior.json'     // note prior also contains the ordered class names
 let matrixFileLocation = './logPwGc.json'    // log prob word weighted on classes
-let historyFileLocation = 'history'  // TODO
-
-
-// ##################################################################
-// TODO These functions/globals are scaffolding which can probably be removed from 
-// a deployed node package. Some are appropriate for api/usermodel.js
-
-// TODO: we should extract the categories from the matrix data file
-// TODO: we should probably also dupe them into the history file for cross-verification
-let browsingCategories = ['lawncare', 'curling', 'baseball'] // TODO This can be obtained as keys for priorFileLocation JSON file.
-
-let fullyLoadedAnyDiskHistory = false
-let fullyLoadedNaiveBayesMatrix = false
-let fullyLoadedAssetsForAdSystem = false
-
-
-// TODO Wat dis? -SCL
-function o (x, depth = null) {
-  let one = 1
-  if (one === 0) {
-    log(x)
-  }
-  return util.inspect(x, {depth: depth})
-}
-
-function log (x) {
-  let prefix = 'OUT: '
-
-  let s = ''
-
-  for (let i = 0; i < arguments.length; i++) {
-    let arg = arguments[i]
-
-    s += o(arg)
-
-    if (i < arguments.length - 1) {
-      s += ', '
-    }
-  }
-
-  console.log(prefix + s)
-}
-
-function main () {
-  simulateOverall()
-}
-
-
-function shouldShowAd () {
-  // TODO rules
-  return true
-}
-
-function pushAdByCategory (category) {
-  // TODO integrate with browser
-  console.log('Pushing ad category: ' + category)
-}
-function loadNaiveBayesMatrixSync () {
-  // indexed on column (stem) for quick lookup
-  // vector width == |browsingCategories|. implicitly indexed
-  naiveBayesMatrix = wrappedJSONReadSync(matrixFileLocation, 'ad naive bayes matrix')
-
-  if (!naiveBayesMatrix) {
-    // TODO remove this - an error is more appropriate
-    naiveBayesMatrix = {'mower': [0.9, 0.0, 0.1], 'push': [0.2, 0.5, 0.2], 'grass': [0.8, 0.0, 0.4]}
-  }
-
-  fullyLoadedNaiveBayesMatrix = true
-}
-
-function getHtml () {
-  return ' <html><body><h1>All About Dem Mowers</h2><p>There are two kinds of mower: Push Lawnmowers and Riding or Driving Lawnmowers. There are two</body> </html> '
-}
-
-function wordsFromHtml (html) {
-  let fake = ['All', 'About', 'Dem', 'Mowers', 'There', 'are', 'two', 'kinds',
-    'of', 'mower', 'Push', 'Lawnmowers', 'and', 'Riding', 'or', 'Driving',
-    'Lawnmowers', 'There', 'are', 'two'
-  ]
-  let truncated = fake.slice(0, maxWords)
-  return truncated
-}
-
-function simulateSingleVisit () {
-  let html = getHtml()
-
-  let words = wordsFromHtml(html)  // NOTE I assume this guy removes extraneous html from DOM scrape -SCL
-  let stems = stemWords(words)
-  let roll = rollUpStringsWithCount(stems)
-  let pageScore = scoreCountedStems(naiveBayesMatrix, naiveBayesPriors, roll)
-
-  addPageScoreToHistorical(pageScore)
-  let historical = getHistoricalPageScores()
-
-  let catScore = deriveCategoryScore(historical)
-  let maxCategoryIndex = vectorIndexOfMax(catScore)
-  let maxCategory = browsingCategories[maxCategoryIndex]
-
-  console.log('browsingCategories: ' + o(browsingCategories))
-  // console.log('matrix: ' + o(naiveBayesMatrix))
-  // console.log('html: ' + o(html))
-  // console.log('words: ' + o(words))
-  // console.log('stems: ' + o(stems))
-  // console.log('roll: ' + o(roll))
-  // console.log('pageScore' + o(pageScore))
-  console.log('historical' + o(historical))
-  // console.log('catScore' + o(catScore))
-
-  let doAd = shouldShowAd()
-
-  if (doAd) {
-    pushAdByCategory(maxCategory)
-  }
-
-  console.log()
-}
-
-function simulateOverall () {
-  loadAssetsForAdSystemSync()
-
-  if (!fullyLoadedAssetsForAdSystem) {
-    return
-  }
-
-  for (let i = 0; i < visitsToSimulate; i++) {
-    console.log('Visit: ' + (i + 1) + '/' + visitsToSimulate)
-    simulateSingleVisit()
-  }
-
-  persistAnyDiskHistorySync()
-}
-
-function getHistoricalPageScores () {
-  return inMemoryPageScoreHistory
-}
-
-function addPageScoreToHistorical (pageScore) {
-  
-  if (!inMemoryPageScoreHistory) {
-    console.log('Could not add page to historical record: !inMemoryPageScoreHistory')
-    return
-  }
-
-  inMemoryPageScoreHistory.push(pageScore)
-
-  let n = inMemoryPageScoreHistory.length
-
-  // this is the "rolling window"
-  // in general, this is triggered w/ probability 1
-  if (n > maxRowsInPageScoreHistory) {
-    let diff = n - maxRowsInPageScoreHistory
-
-    inMemoryPageScoreHistory = inMemoryPageScoreHistory.slice(diff)
-  }
-
-  return inMemoryPageScoreHistory
-}
-
-
-function loadAssetsForAdSystemSync () {
-  // we group these together, for one, because their schemas are interlocked
-  // TODO they both need versioning
-  loadNaiveBayesMatrixSync()
-  loadAnyDiskHistorySync()
-
-  if (!fullyLoadedNaiveBayesMatrix) {
-    return
-  }
-
-  if (!fullyLoadedAnyDiskHistory) {
-    return
-  }
-
-  fullyLoadedAssetsForAdSystem = true
-}
-
-function loadAnyDiskHistorySync () {
-  inMemoryPageScoreHistory = wrappedJSONReadSync(historyFileLocation, 'ad history')
-
-  if (!inMemoryPageScoreHistory) {
-    inMemoryPageScoreHistory = []
-  }
-
-  fullyLoadedAnyDiskHistory = true
-}
-
-function persistAnyDiskHistorySync () {
-  let historyData = JSON.stringify(inMemoryPageScoreHistory)
-
-  fs.writeFileSync(historyFileLocation, historyData, (err) => {
-    if (err) throw err
-  })
-}
-
-// END TODO REMOVES
-// Hey Lawler; I will let you prune this; pretty sure it is all for 
-// api/usermodel.js and makes no sense without the globals that can be found 
-// there -SCL
-// ########################################################
 
 
 function wrappedJSONReadSync (filepath, comment = '') {
@@ -390,20 +185,11 @@ function deriveCategoryScore (historical) {
 }
 
 
-// GLOBAL DEC
-let nbmatrix = wrappedJSONReadSync(matrixFileLocation) // faster if packaged -tell me if I'm wrong -SCL
-let priorvecs = wrappedJSONReadSync(priorFileLocation) // 
 
-function NBWordVec(wordVec) {
+function NBWordVec(wordVec,matrix,priorvecs) {
   let stems = stemWords(wordVec)
   let roll = rollUpStringsWithCount(stems)// 7.3ms
   return scoreCountedStems(matrix, priorvecs['priors'], roll) // 80ms
-}
-
-
-function fullStackRun(file) {
-  let words = textBlobIntoWordVec(file)
-  return NBWordVec(words)
 }
 
 
@@ -421,8 +207,6 @@ function testRun(words, matrix, priorvecs) {
 
 
 module.exports = {
-    nbmatrix : nbmatrix,
-    priorvecs : priorvecs,
     wrappedJSONReadSync : wrappedJSONReadSync,
     textBlobIntoWordVec : textBlobIntoWordVec,
     testRun : testRun,
