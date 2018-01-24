@@ -1,0 +1,28 @@
+{
+  "name": "bat-usermodel",
+  "version": "0.1.0",
+  "description": "BAT Ad Generation Engine",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "co-mocha": "^1.1.2",
+    "chai": "^4.1.2",
+    "mocha": "^2.3.4",
+    "porter-stemmer": "^0.9.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "lint": "standard",
+    "test": "mocha test",
+    "test-security": "nsp check"
+  },
+  "author": "Brave Developers <support@brave.com>",
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brave-intl/bat-usermodel"
+  },
+  "homepage": "https://github.com/brave-intl/bat-usermodel"
+}
