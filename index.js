@@ -1,12 +1,8 @@
 const fs = require('fs')
-const util = require('util')
 const stemmer = require('porter-stemmer').stemmer
-
-const maxWords = 1234 // seems reasonable
 
 let priorFileLocation = './prior.json'     // note prior also contains the ordered class names
 let matrixFileLocation = './logPwGc.json'    // log prob word weighted on classes
-
 
 function wrappedJSONReadSync (filepath, comment = '') {
   let succeed = false
@@ -31,18 +27,22 @@ function wrappedJSONReadSync (filepath, comment = '') {
   return parsed
 }
 
-
-// note this one is possibly only for testing purposes; though may be part of 
-// the HTML cleaner later; the scraper in browser-laptop already exports as
-// string array -SCL
 function textBlobIntoWordVec (file) {
-  var longstring = String(fs.readFileSync(file))
-  longstring = longstring.replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ")
-  longstring = longstring.toLowerCase()
-  return longstring.split(' ') // don't run .slice(0,maxwords) yet
+  let longstring = String(fs.readFileSync(file))
+  longstring = processWordsFromHTML(longstring)
+  return longstring
 }
 
-
+function processWordsFromHTML (html, maxWords = -1) {
+  html = html.replace(/[^\w\s]|_/g, '').replace(/\s+/g, ' ')
+  html = html.toLowerCase()
+  html = html.split(' ')
+  if (maxWords <= 0) { // don't truncate
+    maxWords = html.length
+  }
+  html = html.slice(0, maxWords)
+  return html
+}
 
 function stemWords (words) {
   // 2018.01.12 scott: mvp should use lower-case
@@ -126,20 +126,18 @@ function normalizeL1 (v) {
 }
 
 function logLikToProb (v) {
-  let n  = v.length
+  let n = v.length
   let z = Array(n)
-  let maxval = -1 * Math.max.apply(null,v)
+  let maxval = -1 * Math.max.apply(null, v)
   for (let i = 0; i < n; i++) {
     z[i] = v[i] + maxval
   }
-  return normalizeL1(vectorExp(z)) 
-  return z
+  return normalizeL1(vectorExp(z))
 }
 
-function vectorExp (v) {   
+function vectorExp (v) {
   return v.map(x => Math.exp(x))
 }
-
 
 // broken out for future use
 function logLikCalc (matrix, roll) {
@@ -160,11 +158,11 @@ function logLikCalc (matrix, roll) {
   return total
 }
 
-// 
+//
 function scoreCountedStems (matrix, prior, roll) {
-  let loglik = logLikCalc(matrix,roll) // separated for future use 
+  let loglik = logLikCalc(matrix, roll) // separated for future use
   let logpostlik = vectorAdd(loglik, prior)  // log post likelihood; may kill this eventually
-  let prob = logLikToProb(logpostlik)     
+  let prob = logLikToProb(logpostlik)
   return prob
 }
 
@@ -184,32 +182,29 @@ function deriveCategoryScore (historical) {
   return v
 }
 
-
-
-function NBWordVec(wordVec,matrix,priorvecs) {
+function NBWordVec (wordVec, matrix, priorvecs) {
   let stems = stemWords(wordVec)
   let roll = rollUpStringsWithCount(stems)// 7.3ms
   return scoreCountedStems(matrix, priorvecs['priors'], roll) // 80ms
 }
 
-
-function testRun(words, matrix, priorvecs) {
+function testRun (words, matrix, priorvecs) {
   let clasnames = priorvecs['names']
   let prior = priorvecs['priors']
-  let stems = stemWords(words) 
+  let stems = stemWords(words)
   let roll = rollUpStringsWithCount(stems)
   let pageScore = scoreCountedStems(matrix, prior, roll)
-  let  classout = clasnames[vectorIndexOfMax(pageScore)]
+  let classout = clasnames[vectorIndexOfMax(pageScore)]
   return classout
 }
 
-
-
-
 module.exports = {
-    wrappedJSONReadSync : wrappedJSONReadSync,
-    textBlobIntoWordVec : textBlobIntoWordVec,
-    testRun : testRun,
-    NBWordVec : NBWordVec
+  wrappedJSONReadSync: wrappedJSONReadSync,
+  textBlobIntoWordVec: textBlobIntoWordVec,
+  processWordsFromHTML: processWordsFromHTML,
+  priorFileLocation: priorFileLocation,
+  matrixFileLocation: matrixFileLocation,
+  testRun: testRun,
+  NBWordVec: NBWordVec,
+  deriveCategoryScore: deriveCategoryScore
 }
-
