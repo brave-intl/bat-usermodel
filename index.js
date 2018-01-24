@@ -14,6 +14,11 @@ let priorFileLocation = './prior.json'     // note prior also contains the order
 let matrixFileLocation = './logPwGc.json'    // log prob word weighted on classes
 let historyFileLocation = 'history'  // TODO
 
+
+// ##################################################################
+// TODO These functions/globals are scaffolding which can probably be removed from 
+// a deployed node package. Some are appropriate for api/usermodel.js
+
 // TODO: we should extract the categories from the matrix data file
 // TODO: we should probably also dupe them into the history file for cross-verification
 let browsingCategories = ['lawncare', 'curling', 'baseball'] // TODO This can be obtained as keys for priorFileLocation JSON file.
@@ -22,9 +27,39 @@ let fullyLoadedAnyDiskHistory = false
 let fullyLoadedNaiveBayesMatrix = false
 let fullyLoadedAssetsForAdSystem = false
 
-// ##################################################################
-// TODO These functions are scaffolding which can probably be removed from
-// a deployed node package. Some are appropriate for api/usermodel.js
+
+// TODO Wat dis? -SCL
+function o (x, depth = null) {
+  let one = 1
+  if (one === 0) {
+    log(x)
+  }
+  return util.inspect(x, {depth: depth})
+}
+
+function log (x) {
+  let prefix = 'OUT: '
+
+  let s = ''
+
+  for (let i = 0; i < arguments.length; i++) {
+    let arg = arguments[i]
+
+    s += o(arg)
+
+    if (i < arguments.length - 1) {
+      s += ', '
+    }
+  }
+
+  console.log(prefix + s)
+}
+
+function main () {
+  simulateOverall()
+}
+
+
 function shouldShowAd () {
   // TODO rules
   return true
@@ -114,6 +149,7 @@ function getHistoricalPageScores () {
 }
 
 function addPageScoreToHistorical (pageScore) {
+  
   if (!inMemoryPageScoreHistory) {
     console.log('Could not add page to historical record: !inMemoryPageScoreHistory')
     return
@@ -134,8 +170,6 @@ function addPageScoreToHistorical (pageScore) {
   return inMemoryPageScoreHistory
 }
 
-// END TODO REMOVES
-// ########################################################
 
 function loadAssetsForAdSystemSync () {
   // we group these together, for one, because their schemas are interlocked
@@ -153,6 +187,31 @@ function loadAssetsForAdSystemSync () {
 
   fullyLoadedAssetsForAdSystem = true
 }
+
+function loadAnyDiskHistorySync () {
+  inMemoryPageScoreHistory = wrappedJSONReadSync(historyFileLocation, 'ad history')
+
+  if (!inMemoryPageScoreHistory) {
+    inMemoryPageScoreHistory = []
+  }
+
+  fullyLoadedAnyDiskHistory = true
+}
+
+function persistAnyDiskHistorySync () {
+  let historyData = JSON.stringify(inMemoryPageScoreHistory)
+
+  fs.writeFileSync(historyFileLocation, historyData, (err) => {
+    if (err) throw err
+  })
+}
+
+// END TODO REMOVES
+// Hey Lawler; I will let you prune this; pretty sure it is all for 
+// api/usermodel.js and makes no sense without the globals that can be found 
+// there -SCL
+// ########################################################
+
 
 function wrappedJSONReadSync (filepath, comment = '') {
   let succeed = false
@@ -177,33 +236,18 @@ function wrappedJSONReadSync (filepath, comment = '') {
   return parsed
 }
 
-// note this one is only for testing purposes I think; though may be part of
+
+// note this one is possibly only for testing purposes; though may be part of 
 // the HTML cleaner later; the scraper in browser-laptop already exports as
 // string array -SCL
 function textBlobIntoWordVec (file) {
   var longstring = String(fs.readFileSync(file))
-  longstring = longstring.replace(/[^\w\s]|_/g, '').replace(/\s+/g, ' ')
+  longstring = longstring.replace(/[^\w\s]|_/g, "").replace(/\s+/g, " ")
   longstring = longstring.toLowerCase()
   return longstring.split(' ') // don't run .slice(0,maxwords) yet
 }
 
-function loadAnyDiskHistorySync () {
-  inMemoryPageScoreHistory = wrappedJSONReadSync(historyFileLocation, 'ad history')
 
-  if (!inMemoryPageScoreHistory) {
-    inMemoryPageScoreHistory = []
-  }
-
-  fullyLoadedAnyDiskHistory = true
-}
-
-function persistAnyDiskHistorySync () {
-  let historyData = JSON.stringify(inMemoryPageScoreHistory)
-
-  fs.writeFileSync(historyFileLocation, historyData, (err) => {
-    if (err) throw err
-  })
-}
 
 function stemWords (words) {
   // 2018.01.12 scott: mvp should use lower-case
@@ -287,21 +331,23 @@ function normalizeL1 (v) {
 }
 
 function logLikToProb (v) {
-  let n = v.length
+  let n  = v.length
   let z = Array(n)
-  let maxval = -1 * Math.max.apply(null, v)
+  let maxval = -1 * Math.max.apply(null,v)
   for (let i = 0; i < n; i++) {
     z[i] = v[i] + maxval
   }
-  return normalizeL1(vectorExp(z))
+  return normalizeL1(vectorExp(z)) 
   return z
 }
 
-function vectorExp (v) {
+function vectorExp (v) {   
   return v.map(x => Math.exp(x))
 }
 
-function scoreCountedStems (matrix, prior, roll) {
+
+// broken out for future use
+function logLikCalc (matrix, roll) {
   // in: roll: {'alpha': 2, 'bravo': 1}
 
   // POTENTIAL_OPTIMIZATION_POINT: rewrite to use Map??
@@ -316,9 +362,15 @@ function scoreCountedStems (matrix, prior, roll) {
     total = vectorAdd(total, stemScore)
   }
 
-  total = vectorAdd(total, prior)  // log likelihood
-  total = logLikToProb(total)     // believe it or not this is how loglikelihood is turned into a prob
   return total
+}
+
+// 
+function scoreCountedStems (matrix, prior, roll) {
+  let loglik = logLikCalc(matrix,roll) // separated for future use 
+  let logpostlik = vectorAdd(loglik, prior)  // log post likelihood; may kill this eventually
+  let prob = logLikToProb(logpostlik)     
+  return prob
 }
 
 function vectorIndexOfMax (v) {
@@ -337,66 +389,43 @@ function deriveCategoryScore (historical) {
   return v
 }
 
-function o (x, depth = null) {
-  let one = 1
-  if (one === 0) {
-    log(x)
-  }
-  return util.inspect(x, {depth: depth})
-}
 
-function log (x) {
-  let prefix = 'OUT: '
+// GLOBAL DEC
+let nbmatrix = wrappedJSONReadSync(matrixFileLocation) // faster if packaged -tell me if I'm wrong -SCL
+let priorvecs = wrappedJSONReadSync(priorFileLocation) // 
 
-  let s = ''
-
-  for (let i = 0; i < arguments.length; i++) {
-    let arg = arguments[i]
-
-    s += o(arg)
-
-    if (i < arguments.length - 1) {
-      s += ', '
-    }
-  }
-
-  console.log(prefix + s)
-}
-
-function main () {
-  simulateOverall()
-}
-
-// slowest possible NB, since loading matrix/priors every time called
-// will stick this in mocha later when I remember how to use mocha
-// example: var output = fullStackRun('./data/text10.txt')
-function fullStackRun (file) {
-  let matrix = wrappedJSONReadSync(matrixFileLocation) // 50ms
-  let priorvecs = wrappedJSONReadSync(priorFileLocation) // 4ms
-  let words = textBlobIntoWordVec(file)
-  let clasnames = priorvecs['names']
-  let prior = priorvecs['priors']
-  let stems = stemWords(words) // 3.8ms
+function NBWordVec(wordVec) {
+  let stems = stemWords(wordVec)
   let roll = rollUpStringsWithCount(stems)// 7.3ms
-  let pageScore = scoreCountedStems(matrix, prior, roll) // 80ms
-  return pageScore
+  return scoreCountedStems(matrix, priorvecs['priors'], roll) // 80ms
 }
 
-function testRun (words, matrix, priorvecs) {
+
+function fullStackRun(file) {
+  let words = textBlobIntoWordVec(file)
+  return NBWordVec(words)
+}
+
+
+function testRun(words, matrix, priorvecs) {
   let clasnames = priorvecs['names']
   let prior = priorvecs['priors']
-  let stems = stemWords(words)
+  let stems = stemWords(words) 
   let roll = rollUpStringsWithCount(stems)
   let pageScore = scoreCountedStems(matrix, prior, roll)
-  let classout = clasnames[vectorIndexOfMax(pageScore)]
+  let  classout = clasnames[vectorIndexOfMax(pageScore)]
   return classout
 }
 
-// main()
+
+
 
 module.exports = {
-  shouldShowAd: shouldShowAd,
-  wrappedJSONReadSync: wrappedJSONReadSync,
-  textBlobIntoWordVec: textBlobIntoWordVec,
-  testRun: testRun
+    nbmatrix : nbmatrix,
+    priorvecs : priorvecs,
+    wrappedJSONReadSync : wrappedJSONReadSync,
+    textBlobIntoWordVec : textBlobIntoWordVec,
+    testRun : testRun,
+    NBWordVec : NBWordVec
 }
+
