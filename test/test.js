@@ -5,8 +5,8 @@ var expect = require('chai').expect
 var um = require('../index')
 
 var predictions = um.wrappedJSONReadSync('./data/predictions.json')
-var matrix = um.wrappedJSONReadSync('./logPwGc.json')
-var priorvecs = um.wrappedJSONReadSync('./prior.json')
+var matrix = um.getMatrixDataSync()
+var priorvecs = um.getPriorDataSync()
 
 function itTestNB (i) {
   it(('prediction test ' + i), function () {

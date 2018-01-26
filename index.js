@@ -1,8 +1,18 @@
 const fs = require('fs')
 const stemmer = require('porter-stemmer').stemmer
 
-let priorFileLocation = './prior.json'     // note prior also contains the ordered class names
-let matrixFileLocation = './logPwGc.json'    // log prob word weighted on classes
+const minimumWordsToClassify = 20
+
+let priorFileLocation =  __dirname + '/prior.json'     // note prior also contains the ordered class names
+let matrixFileLocation = __dirname + '/logPwGc.json'    // log prob word weighted on classes
+
+function getMatrixDataSync() {
+  return wrappedJSONReadSync(matrixFileLocation)
+}
+
+function getPriorDataSync() {
+  return wrappedJSONReadSync(priorFileLocation)
+}
 
 function wrappedJSONReadSync (filepath, comment = '') {
   let succeed = false
@@ -206,5 +216,8 @@ module.exports = {
   matrixFileLocation: matrixFileLocation,
   testRun: testRun,
   NBWordVec: NBWordVec,
-  deriveCategoryScore: deriveCategoryScore
+  deriveCategoryScore: deriveCategoryScore,
+  minimumWordsToClassify: minimumWordsToClassify,
+  getMatrixDataSync: getMatrixDataSync,
+  getPriorDataSync: getPriorDataSync,
 }
