@@ -2,6 +2,7 @@ const fs = require('fs')
 const stemmer = require('porter-stemmer').stemmer
 
 const minimumWordsToClassify = 20
+const maximumWordsToClassify = 1234
 
 let priorFileLocation =  __dirname + '/prior.json'     // note prior also contains the ordered class names
 let matrixFileLocation = __dirname + '/logPwGc.json'    // log prob word weighted on classes
@@ -218,6 +219,7 @@ module.exports = {
   NBWordVec: NBWordVec,
   deriveCategoryScore: deriveCategoryScore,
   minimumWordsToClassify: minimumWordsToClassify,
+  maximumWordsToClassify: maximumWordsToClassify,
   getMatrixDataSync: getMatrixDataSync,
   getPriorDataSync: getPriorDataSync,
 }
