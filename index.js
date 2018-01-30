@@ -222,4 +222,5 @@ module.exports = {
   maximumWordsToClassify: maximumWordsToClassify,
   getMatrixDataSync: getMatrixDataSync,
   getPriorDataSync: getPriorDataSync,
+  vectorIndexOfMax: vectorIndexOfMax,
 }
