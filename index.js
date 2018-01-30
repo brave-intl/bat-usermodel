@@ -181,7 +181,7 @@ function vectorIndexOfMax (v) {
   return v.indexOf(Math.max(...v))
 }
 
-function deriveCategoryScore (historical) {
+function deriveCategoryScores (historical) {
   let w = getArrayMatrixWidth(historical)
 
   let v = getZeroesVector(w)
@@ -217,7 +217,7 @@ module.exports = {
   matrixFileLocation: matrixFileLocation,
   testRun: testRun,
   NBWordVec: NBWordVec,
-  deriveCategoryScore: deriveCategoryScore,
+  deriveCategoryScores: deriveCategoryScores,
   minimumWordsToClassify: minimumWordsToClassify,
   maximumWordsToClassify: maximumWordsToClassify,
   getMatrixDataSync: getMatrixDataSync,
