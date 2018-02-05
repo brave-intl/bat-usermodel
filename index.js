@@ -209,6 +209,18 @@ function testRun (words, matrix, priorvecs) {
   return classout
 }
 
+function getSampleAdFiles() {
+  let path = __dirname + '/sample-ads/'  
+
+  let files = fs.readdirSync(path)
+  // remove hidden
+  files = files.filter(x => !x.startsWith('.'))
+
+  let fullpaths = files.map(x => path + x)
+
+  return fullpaths
+}
+
 module.exports = {
   wrappedJSONReadSync: wrappedJSONReadSync,
   textBlobIntoWordVec: textBlobIntoWordVec,
@@ -223,4 +235,5 @@ module.exports = {
   getMatrixDataSync: getMatrixDataSync,
   getPriorDataSync: getPriorDataSync,
   vectorIndexOfMax: vectorIndexOfMax,
+  getSampleAdFiles: getSampleAdFiles,
 }
