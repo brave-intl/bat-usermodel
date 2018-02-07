@@ -1,17 +1,18 @@
 const fs = require('fs')
 const stemmer = require('porter-stemmer').stemmer
+const path = require('path')
 
 const minimumWordsToClassify = 20
 const maximumWordsToClassify = 1234
 
-let priorFileLocation =  __dirname + '/prior.json'     // note prior also contains the ordered class names
-let matrixFileLocation = __dirname + '/logPwGc.json'    // log prob word weighted on classes
+let priorFileLocation = path.join(__dirname, '/prior.json')    // note prior also contains the ordered class names
+let matrixFileLocation = path.join(__dirname, '/logPwGc.json')  // log prob word weighted on classes
 
-function getMatrixDataSync() {
+function getMatrixDataSync () {
   return wrappedJSONReadSync(matrixFileLocation)
 }
 
-function getPriorDataSync() {
+function getPriorDataSync () {
   return wrappedJSONReadSync(priorFileLocation)
 }
 
@@ -209,16 +210,22 @@ function testRun (words, matrix, priorvecs) {
   return classout
 }
 
-function getSampleAdFiles() {
-  let path = __dirname + '/sample-ads/'  
+function getSampleAdFiles () {
+  let dirpath = path.join(__dirname, '/sample-ads/')
 
-  let files = fs.readdirSync(path)
+  let files = fs.readdirSync(dirpath)
   // remove hidden
   files = files.filter(x => !x.startsWith('.'))
 
-  let fullpaths = files.map(x => path + x)
+  let fullpaths = files.map(x => path.join(dirpath, x))
 
   return fullpaths
+}
+
+function getSampleAdFeed () {
+  let filepath = path.join(__dirname, '/sample-ads/bat-ads-feed.json')
+  let feed = wrappedJSONReadSync(filepath)
+  return feed
 }
 
 module.exports = {
@@ -236,4 +243,5 @@ module.exports = {
   getPriorDataSync: getPriorDataSync,
   vectorIndexOfMax: vectorIndexOfMax,
   getSampleAdFiles: getSampleAdFiles,
+  getSampleAdFeed: getSampleAdFeed
 }
