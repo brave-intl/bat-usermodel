@@ -1,4 +1,5 @@
 # Naive Bayes
+
     The Naive Bayes fit is done assuming multinomial distribution with the standard english language
     stopword list.
     
@@ -31,25 +32,25 @@
 
 ##  prior.json
 
-     This is a json structure consisting of a vector of class labels denoted by "names" and a vector of
-     prior (log) class probabilities denoted by "priors."  
-     The priors are "document frequencies" aka the probability of a class in the corpus of documents.
-     This vector of log probabilities is presently not actually used in the calculation, and is of lesser
-     importance. Of primary importance is the presence of the class  labels as an ordered list. This
-     is used in defining the actual classname in the NB code.
+    This is a json structure consisting of a vector of class labels denoted by "names" and a vector of
+    prior (log) class probabilities denoted by "priors."  
+    The priors are "document frequencies" aka the probability of a class in the corpus of documents.
+    This vector of log probabilities is presently not actually used in the calculation, and is of lesser
+    importance. Of primary importance is the presence of the class  labels as an ordered list. This
+    is used in defining the actual classname in the NB code.
      
 ## logPwGc.json
 
-   This is a set of vectors of multinomial log probabilities of a porter stemmed words given the class.
-   The class is implied by the  ordering  defined in  prior.json. Aka if prior.json has a list of 3 classes a la
-   {"names": ["red", "blue", "green"], priors: [-1.0988,-1.0981,-1.0987]}
-   It is to be understood that the first log probability in the list corresponds to class "red" the second,
-   "blue" etc.   All words, regardless of language, will be porter stemmed.
+    This is a set of vectors of multinomial log probabilities of a porter stemmed words given the class.
+    The class is implied by the  ordering  defined in  prior.json. Aka if prior.json has a list of 3 classes a la
+    {"names": ["red", "blue", "green"], priors: [-1.0988,-1.0981,-1.0987]}
+    It is to be understood that the first log probability in the list corresponds to class "red" the second,
+    "blue" etc.   All words, regardless of language, will be porter stemmed.
 
 ## taxonomy.json
 
-The original class taxonomy was a flat taxonomy. It was fully defined by prior.json.
-    Taxonomies with subcategories need to encode this in taxonomy.json.
-    The vectors of subcategories will be keyed by catogory aka..
-    { "category": ["subcat1", "subcat2", ....] ...
+   The original class taxonomy was a flat taxonomy. It was fully defined by prior.json.
+   Taxonomies with subcategories need to encode this in taxonomy.json.
+   The vectors of subcategories will be keyed by catogory aka..
+   { "category": ["subcat1", "subcat2", ....] ...
     
