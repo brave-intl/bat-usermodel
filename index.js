@@ -1,6 +1,7 @@
 const fs = require('fs')
 const path = require('path')
 
+const locale = require('locale')
 const stemmer = require('porter-stemmer').stemmer
 
 const minimumWordsToClassify = 20
@@ -35,6 +36,7 @@ function setLocale (newCode, newPath) {
     if (fs.statSync(name).isDirectory()) newCodes.push(entry)
   })
 
+  newCode = (new locale.Locales(newCode).best(new locale.Locales(newCodes, 'default'))).toString()
   if (newCodes.indexOf(newCode) === -1) throw new Error(newPath + ': no such locale as ' + newCode)
 
   localeCode = newCode
@@ -47,14 +49,14 @@ setLocale(defaultCode, defaultPath)
 function priorFileLocation (locale, rootPath) {
   setLocale(locale, rootPath)
 
-  return path.join(localesPath, localeCode, 'prior.json')
+  return path.join(localesPath, localeCode, 'prior')
 }
 
 // log prob word weighted on classes
 function matrixFileLocation (locale, rootPath) {
   setLocale(locale, rootPath)
 
-  return path.join(localesPath, localeCode, 'logPwGc.json')
+  return path.join(localesPath, localeCode, 'logPwGc')
 }
 
 function getPriorDataSync (locale, rootPath) {
@@ -66,11 +68,22 @@ function getMatrixDataSync (locale, rootPath) {
 }
 
 function wrappedJSONReadSync (filepath, comment = '') {
+  const files = [ filepath, filepath + '.js', filepath + '.json' ]
+
+  for (let file of files) {
+    try {
+      fs.statSync(file)
+      filepath = file
+      break
+    } catch (ex) {
+    }
+  }
+
   const f = {
     js: () => { return require(filepath) },
 
     json: () => { return JSON.parse(fs.readFileSync(filepath)) }
-  }[path.extname(filepath).substr(1)]
+  }[path.extname(filepath).substr(1) || 'json']
   if (!f) throw new Error('unrecognized file: ' + filepath)
 
   try {
@@ -264,9 +277,7 @@ function getSampleAdFiles () {
 }
 
 function getSampleAdFeed () {
-  let filepath = path.join(__dirname, '/sample-ads/bat-ads-feed.json')
-  let feed = wrappedJSONReadSync(filepath)
-  return feed
+  return JSON.parse(fs.readFileSync(path.join(__dirname, '/sample-ads/bat-ads-feed.json')))
 }
 
 module.exports = {
