@@ -19,7 +19,7 @@
     "supercategory" fit can be done  by induction. There will be no sub-sub-categories; taxonomies can
     only be 2 deep.
 
-    New json files should be kept in ./data
+    New json files should be kept in the root directory of this package.
 
 # JSON files
 
