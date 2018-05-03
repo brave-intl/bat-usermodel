@@ -1,42 +1,83 @@
 const fs = require('fs')
-const stemmer = require('porter-stemmer').stemmer
 const path = require('path')
+
+const stemmer = require('porter-stemmer').stemmer
 
 const minimumWordsToClassify = 20
 const maximumWordsToClassify = 1234
 
-let priorFileLocation = path.join(__dirname, '/prior.json')    // note prior also contains the ordered class names
-let matrixFileLocation = path.join(__dirname, '/logPwGc.json')  // log prob word weighted on classes
+const defaultCode = 'default'
+const defaultPath = path.join(__dirname, 'locales')
 
-function getMatrixDataSync () {
-  return wrappedJSONReadSync(matrixFileLocation)
+let localeCode
+let localeCodes
+let localesPath
+
+function setLocale (newCode, newPath) {
+  const newCodes = []
+
+  if (newCode) {
+    if (!newPath) {
+      if (newCodes.indexOf(newCode) === -1) throw new Error(localesPath + ': no such locale as ' + newCode)
+      return
+    }
+  } else {
+    if (!newPath) return
+
+    newCode = localeCode
+  }
+
+  if ((!newCode) && (!newPath)) return
+
+  fs.readdirSync(newPath).forEach((entry) => {
+    const name = path.join(newPath, entry)
+
+    if (fs.statSync(name).isDirectory()) newCodes.push(entry)
+  })
+
+  if (newCodes.indexOf(newCode) === -1) throw new Error(newPath + ': no such locale as ' + newCode)
+
+  localeCode = newCode
+  localeCodes = newCodes
+  localesPath = newPath
+}
+setLocale(defaultCode, defaultPath)
+
+// note prior also contains the ordered class names
+function priorFileLocation (locale, rootPath) {
+  setLocale(locale, rootPath)
+
+  return path.join(localesPath, localeCode, 'prior.json')
 }
 
-function getPriorDataSync () {
-  return wrappedJSONReadSync(priorFileLocation)
+// log prob word weighted on classes
+function matrixFileLocation (locale, rootPath) {
+  setLocale(locale, rootPath)
+
+  return path.join(localesPath, localeCode, 'logPwGc.json')
+}
+
+function getPriorDataSync (locale, rootPath) {
+  return wrappedJSONReadSync(priorFileLocation(locale, rootPath))
+}
+
+function getMatrixDataSync (locale, rootPath) {
+  return wrappedJSONReadSync(matrixFileLocation(locale, rootPath))
 }
 
 function wrappedJSONReadSync (filepath, comment = '') {
-  let succeed = false
-  let parsed
+  const f = {
+    js: () => { return require(filepath) },
+
+    json: () => { return JSON.parse(fs.readFileSync(filepath)) }
+  }[path.extname(filepath).substr(1)]
+  if (!f) throw new Error('unrecognized file: ' + filepath)
 
   try {
-    let data = fs.readFileSync(filepath)
-    try {
-      parsed = JSON.parse(data)
-      succeed = true
-    } catch (err) {
-      console.log('Error parsing ' + comment + ' file: ' + err)
-    }
-  } catch (err) {
-    console.log('Error reading ' + comment + ' file: ' + err)
+    return f()
+  } catch (ex) {
+    console.log(filepath + ': ' + ex.toString)
   }
-
-  if (!succeed) {
-    return undefined
-  }
-
-  return parsed
 }
 
 function textBlobIntoWordVec (file) {
@@ -54,11 +95,6 @@ function processWordsFromHTML (html, maxWords = -1) {
   }
   html = html.slice(0, maxWords)
   return html
-}
-
-function stemWords (words) {
-  // 2018.01.12 scott: mvp should use lower-case
-  return words.map(w => stemmer(w.toLowerCase()))
 }
 
 function rollUpStringsWithCount (strings) {
@@ -200,6 +236,11 @@ function NBWordVec (wordVec, matrix, priorvecs) {
   return scoreCountedStems(matrix, priorvecs['priors'], roll) // 80ms
 }
 
+function stemWords (words) {
+  // 2018.01.12 scott: mvp should use lower-case
+  return words.map(w => stemmer(w.toLowerCase()))
+}
+
 function testRun (words, matrix, priorvecs) {
   let clasnames = priorvecs['names']
   let prior = priorvecs['priors']
@@ -229,19 +270,26 @@ function getSampleAdFeed () {
 }
 
 module.exports = {
-  wrappedJSONReadSync: wrappedJSONReadSync,
-  textBlobIntoWordVec: textBlobIntoWordVec,
-  processWordsFromHTML: processWordsFromHTML,
-  priorFileLocation: priorFileLocation,
-  matrixFileLocation: matrixFileLocation,
-  testRun: testRun,
-  NBWordVec: NBWordVec,
-  deriveCategoryScores: deriveCategoryScores,
+// constants (not really sure why these are here)
   minimumWordsToClassify: minimumWordsToClassify,
   maximumWordsToClassify: maximumWordsToClassify,
-  getMatrixDataSync: getMatrixDataSync,
+
+// read files
+  setLocale: setLocale,
+  priorFileLocation: priorFileLocation,
+  matrixFileLocation: matrixFileLocation,
   getPriorDataSync: getPriorDataSync,
+  getMatrixDataSync: getMatrixDataSync,
+  wrappedJSONReadSync: wrappedJSONReadSync,
+
+  textBlobIntoWordVec: textBlobIntoWordVec,
+  processWordsFromHTML: processWordsFromHTML,
+
   vectorIndexOfMax: vectorIndexOfMax,
+  deriveCategoryScores: deriveCategoryScores,
+  NBWordVec: NBWordVec,
+
+  testRun: testRun,
   getSampleAdFiles: getSampleAdFiles,
   getSampleAdFeed: getSampleAdFeed
 }
