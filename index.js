@@ -14,21 +14,19 @@ let localeCode
 let localeCodes
 let localesPath
 
-function setLocale (newCode, newPath) {
+function setLocaleSync (newCode, newPath) {
   const newCodes = []
 
   if (newCode) {
     if (!newPath) {
       if (newCodes.indexOf(newCode) === -1) throw new Error(localesPath + ': no such locale as ' + newCode)
-      return
+      return localeCode
     }
   } else {
-    if (!newPath) return
+    if (!newPath) return localeCode
 
     newCode = localeCode
   }
-
-  if ((!newCode) && (!newPath)) return
 
   fs.readdirSync(newPath).forEach((entry) => {
     const name = path.join(newPath, entry)
@@ -42,19 +40,21 @@ function setLocale (newCode, newPath) {
   localeCode = newCode
   localeCodes = newCodes
   localesPath = newPath
+
+  return localeCode
 }
-setLocale(defaultCode, defaultPath)
+setLocaleSync(defaultCode, defaultPath)
 
 // note prior also contains the ordered class names
 function priorFileLocation (locale, rootPath) {
-  setLocale(locale, rootPath)
+  setLocaleSync(locale, rootPath)
 
   return path.join(localesPath, localeCode, 'prior')
 }
 
 // log prob word weighted on classes
 function matrixFileLocation (locale, rootPath) {
-  setLocale(locale, rootPath)
+  setLocaleSync(locale, rootPath)
 
   return path.join(localesPath, localeCode, 'logPwGc')
 }
@@ -285,17 +285,18 @@ module.exports = {
   minimumWordsToClassify: minimumWordsToClassify,
   maximumWordsToClassify: maximumWordsToClassify,
 
-// read files
-  setLocale: setLocale,
+// data files
+
+  setLocaleSync: setLocaleSync,
   priorFileLocation: priorFileLocation,
   matrixFileLocation: matrixFileLocation,
   getPriorDataSync: getPriorDataSync,
   getMatrixDataSync: getMatrixDataSync,
   wrappedJSONReadSync: wrappedJSONReadSync,
 
+// analysis
   textBlobIntoWordVec: textBlobIntoWordVec,
   processWordsFromHTML: processWordsFromHTML,
-
   vectorIndexOfMax: vectorIndexOfMax,
   deriveCategoryScores: deriveCategoryScores,
   NBWordVec: NBWordVec,
