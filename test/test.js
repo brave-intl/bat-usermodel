@@ -4,7 +4,7 @@ var expect = require('chai').expect
 
 var um = require('../index')
 
-var predictions = um.wrappedJSONReadSync('./data/predictions.json')
+var predictions = um.wrappedJSONReadSync('./test//data/predictions.json')
 var matrix = um.getMatrixDataSync()
 var priorvecs = um.getPriorDataSync()
 
@@ -13,7 +13,7 @@ function itTestNB (i) {
     var label = predictions['label'][i]
     var file = predictions['doc'][i]
     console.log(file)
-    var words = um.textBlobIntoWordVec('./data/' + file)
+    var words = um.textBlobIntoWordVec('./test/data/' + file)
     var pred = um.testRun(words, matrix, priorvecs)// um.NBWordVec(words) //
     expect(pred).to.eql(label)
   })
