@@ -5,6 +5,8 @@ This is a work in progress. Comments welcome, of course.
 
 The Naive Bayes fit uses multinomial distribution with a stopword list.
 
+The resulting data files are all log probabilities with 5 significant digits.
+
 # Data
 The `locales/` directory contains a directory for each locale dataset.
 The default list (`locales/default`) uses the standard english language stopword list.
@@ -18,7 +20,10 @@ The `prior.js` file looks like this:
         , priors: [ lp1,      ... ]
         }
 
-to map each class in `names` to a log probability in `priors`.
+consisting of a vector of class labels denoted by "names" and a vector of
+    prior (log) class probabilities denoted by "priors."  
+    The priors are "document frequencies" aka the probability of a class in the corpus of documents.
+    
 
 The `logPwGc.js` file looks like this:
 
@@ -27,7 +32,11 @@ The `logPwGc.js` file looks like this:
         , word12
         }
 
-to map each stemmed word to an array of log probabilities corresponding to the classes enumerated in `prior.js`.
+    This is a set of vectors of multinomial log probabilities of porter stemmed words given the class.
+    The class is implied by the  ordering  defined in  prior.json. Aka if prior.json has a list of 3 classes a la
+    {"names": ["red", "blue", "green"], priors: [-1.0988,-1.0981,-1.0987]}
+    It is to be understood that the first log probability in the list corresponds to class "red" the second,
+    "blue" etc.   All words, regardless of language, will be porter stemmed.
 
 You probably want to run
 
@@ -42,10 +51,19 @@ take a look at the [quanteda](https://docs.quanteda.io/) package.
 The category space is flat.
 
 A two-level category space may be implemented by using a seperate class for each subcategory.
-Subcategories may be mapped to a common supercategory using induction.
+
+Subcategories may be mapped to a common supercategory using a taxonomy json/locale file, which maps categories
+to subcategories.
+
+   The original class taxonomy was a flat taxonomy. It was fully defined by prior.json.
+   Taxonomies with subcategories need to encode this in taxonomy.json.
+   The vectors of subcategories will be keyed by catogory aka..
+   { "category": ["subcat1", "subcat2", ....] ...
+
+
 
 # API
-The currenbt interface is synchronous.
+The current interface is synchronous.
 
 ## Constants
 
@@ -113,5 +131,5 @@ it mut be made before either of these two calls is made:
 Future revisions may add asynchronous calls.
 
 ## Log Probabilities
-These are encoded as negatibe numbers.
+These are encoded as negative numbers.
 Future revisions may omit the minus-sign.
