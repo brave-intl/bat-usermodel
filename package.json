@@ -1,6 +1,6 @@
 {
   "name": "@brave-intl/bat-usermodel",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "BAT Ad Generation Engine",
   "main": "index.js",
   "directories": {

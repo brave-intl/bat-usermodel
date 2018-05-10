@@ -111,6 +111,17 @@ Note that `setLocaleSync` returns the actual locale being used,
 e.g., if the locales directory contains "en" but not "en_US",
 then `setLocaleSync('en_US')` returns "en".
 
+To determine what locales are available:
+
+        const locales = getLocalesSync()
+        
+To retrieve all locale information:
+
+        const localeInfo = getLocaleInfo()
+        // localeInfo.locale = 'default'
+        // localeInfo.locales = [ 'default', 'en' ]
+        // localeInfo.path = '/...bat-usermodel/locales'
+
 ## Data Files
 
 The call to `setLocaleSYnc` is optional;

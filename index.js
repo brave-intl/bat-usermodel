@@ -10,22 +10,37 @@ const maximumWordsToClassify = 1234
 const defaultCode = 'default'
 const defaultPath = path.join(__dirname, 'locales')
 
-let localeCode
-let localeCodes
-let localesPath
+let localeInfo = [ undefined, undefined, undefined ]
+
+function getLocaleInfo () {
+  return { locale: localeInfo[0], locales: localeInfo[1], path: localeInfo[2] }
+}
+
+function getLocalesSync (newPath) {
+  const currentInfo = localeInfo.slice(0)
+  let result
+
+  if ((!newPath) || (newPath === localeInfo[2])) return localeInfo[1].slice(0)
+
+  result = setLocaleSync(newPath)
+
+  localeInfo = currentInfo
+
+  return result
+}
 
 function setLocaleSync (newCode, newPath) {
   const newCodes = []
 
   if (newCode) {
     if (!newPath) {
-      if (newCodes.indexOf(newCode) === -1) throw new Error(localesPath + ': no such locale as ' + newCode)
-      return localeCode
+      if (newCodes.indexOf(newCode) === -1) throw new Error(localeInfo[2] + ': no such locale as ' + newCode)
+      return localeInfo[0]
     }
   } else {
-    if (!newPath) return localeCode
+    if (!newPath) return localeInfo[0]
 
-    newCode = localeCode
+    newCode = localeInfo[0]
   }
 
   fs.readdirSync(newPath).forEach((entry) => {
@@ -37,11 +52,9 @@ function setLocaleSync (newCode, newPath) {
   newCode = (new locale.Locales(newCode).best(new locale.Locales(newCodes, 'default'))).toString()
   if (newCodes.indexOf(newCode) === -1) throw new Error(newPath + ': no such locale as ' + newCode)
 
-  localeCode = newCode
-  localeCodes = newCodes
-  localesPath = newPath
+  localeInfo = [ newCode, newCodes, newPath ]
 
-  return localeCode
+  return localeInfo[0]
 }
 setLocaleSync(defaultCode, defaultPath)
 
@@ -49,14 +62,14 @@ setLocaleSync(defaultCode, defaultPath)
 function priorFileLocation (locale, rootPath) {
   setLocaleSync(locale, rootPath)
 
-  return path.join(localesPath, localeCode, 'prior')
+  return path.join(localeInfo[2], localeInfo[0], 'prior')
 }
 
 // log prob word weighted on classes
 function matrixFileLocation (locale, rootPath) {
   setLocaleSync(locale, rootPath)
 
-  return path.join(localesPath, localeCode, 'logPwGc')
+  return path.join(localeInfo[2], localeInfo[0], 'logPwGc')
 }
 
 function getPriorDataSync (locale, rootPath) {
@@ -287,6 +300,8 @@ module.exports = {
 
 // data files
 
+  getLocaleInfo: getLocaleInfo,
+  getLocalesSync: getLocalesSync,
   setLocaleSync: setLocaleSync,
   priorFileLocation: priorFileLocation,
   matrixFileLocation: matrixFileLocation,
