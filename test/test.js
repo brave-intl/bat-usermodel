@@ -1,27 +1,28 @@
 'use strict'
 
-var expect = require('chai').expect
+/* global describe, it */
 
-var um = require('../index')
+const assert = require('assert')
+const um = require('../index')
+const predictions = um.wrappedJSONReadSync('./test//data/predictions.json').data
 
-var predictions = um.wrappedJSONReadSync('./test//data/predictions.json')
-var matrix = um.getMatrixDataSync()
-var priorvecs = um.getPriorDataSync()
+const matrix = um.getMatrixDataSync()
+const priorvecs = um.getPriorDataSync()
 
 function itTestNB (i) {
-  it(('prediction test ' + i), function () {
-    var label = predictions['label'][i]
-    var file = predictions['doc'][i]
-    console.log(file)
-    var words = um.textBlobIntoWordVec('./test/data/' + file)
-    var pred = um.testRun(words, matrix, priorvecs)// um.NBWordVec(words) //
-    expect(pred).to.eql(label)
+  const label = predictions[i].label
+  const file = predictions[i].doc
+
+  it(`Prediction test ${i}: File ${file}`, function () {
+    const words = um.textBlobIntoWordVec('./test/data/' + file)
+    const pred = um.testRun(words, matrix, priorvecs)
+    assert.strictEqual(pred, label, `Failing for file: ${file}`)
   })
 }
 
 describe('Check NB predictions', function () {
   describe('main()', function () {
-    for (var i = 0; i < predictions['doc'].length; i++) {
+    for (let i = 0; i < predictions.length; i++) {
       itTestNB(i)
     }
   })

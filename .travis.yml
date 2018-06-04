@@ -1,0 +1,19 @@
+language: node_js
+node_js:
+  - "node"
+dist: trusty
+branches:
+  only:
+    - master
+env:
+  - TEST_SUITE=lint
+  - TEST_SUITE=test-unit
+  - TEST_SUITE=test-security
+cache:
+  directories:
+    - $HOME/.npm
+before_install:
+  - npm i -g npm@6.0.1
+  - npm --version
+script:
+  - npm run $TEST_SUITE
