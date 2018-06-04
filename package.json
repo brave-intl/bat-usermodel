@@ -3,36 +3,12 @@
   "version": "0.3.1",
   "description": "BAT Ad Generation Engine",
   "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
-  "dependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-preset-stage-2": "^6.24.1",
-    "chai": "^4.1.2",
-    "co-mocha": "^1.1.2",
-    "locale": "^0.1.0",
-    "mocha": "^2.3.4",
-    "os-locale": "^2.1.0",
-    "porter-stemmer": "^0.9.1"
-  },
-  "engines": {
-    "node": "8.9.2",
-    "npm": "5.5.1"
-  },
-  "devDependencies": {
-    "babel-eslint": "^8.0.0",
-    "npm-check-updates": "^2.12.1",
-    "nsp": "^3.1.0",
-    "standard": "10.0.3",
-    "uglify-js": "3.3.23"
-  },
   "scripts": {
     "lint": "standard",
     "lint-fix": "standard --fix",
-    "test": "mocha test",
-    "test-all": "npm run test && npm run test-security",
-    "test-security": "nsp check"
+    "test": "npm run unit && npm run test-security",
+    "test-unit": "mocha test",
+    "test-security": "npm audit"
   },
   "author": "Brave Developers <support@brave.com>",
   "license": "MPL-2.0",
@@ -43,13 +19,25 @@
     "type": "git",
     "url": "https://github.com/brave-intl/bat-usermodel"
   },
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "locale": "^0.1.0",
+    "os-locale": "^2.1.0",
+    "porter-stemmer": "^0.9.1"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "standard": "10.0.3"
+  },
+  "engines": {
+    "npm": ">=6.0.1"
+  },
   "homepage": "https://github.com/brave-intl/bat-usermodel",
   "standard": {
     "ignore": [
-      "locales/*/logPwGc.js",
-      "locales/*/prior.js",
-      "test/test.js"
-    ],
-    "parser": "babel-eslint"
+      "locales/**"
+    ]
   }
 }
