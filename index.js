@@ -102,7 +102,7 @@ function wrappedJSONReadSync (filepath, comment = '') {
   try {
     return f()
   } catch (ex) {
-    console.log(filepath + ': ' + ex.toString)
+    console.log(filepath + ': ' + ex.toString())
   }
 }
 
