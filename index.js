@@ -7,10 +7,18 @@ const stemmer = require('porter-stemmer').stemmer
 const minimumWordsToClassify = 20
 const maximumWordsToClassify = 1234
 
-const defaultCode = 'default'
+let defaultCode = 'default'
 const defaultPath = path.join(__dirname, 'locales')
 
 let localeInfo = [ undefined, undefined, undefined ]
+
+try {
+  const parts = path.parse(fs.readlinkSync(path.join(defaultPath, defaultCode)))
+
+  if (!parts.dir) defaultCode = parts.name
+} catch (ex) {
+  console.log('loser')
+}
 
 function getLocaleInfo () {
   return { locale: localeInfo[0], locales: localeInfo[1], path: localeInfo[2] }
@@ -33,8 +41,12 @@ function setLocaleSync (newCode, newPath) {
   const newCodes = []
 
   if (newCode) {
+    if (newCode === 'default') newCode = defaultCode
+
     if (!newPath) {
-      if (newCodes.indexOf(newCode) === -1) throw new Error(localeInfo[2] + ': no such locale as ' + newCode)
+      if (localeInfo[1].indexOf(newCode) === -1) throw new Error(localeInfo[2] + ': no such locale as ' + newCode)
+      localeInfo.splice(0, 1, newCode)
+
       return localeInfo[0]
     }
   } else {
@@ -43,13 +55,17 @@ function setLocaleSync (newCode, newPath) {
     newCode = localeInfo[0]
   }
 
+  if (fs.statSync(path.join(newPath, defaultCode)).isDirectory()) newCodes.push(defaultCode)
+
   fs.readdirSync(newPath).forEach((entry) => {
+    if ((entry === defaultCode) || (entry === 'default')) return
+
     const name = path.join(newPath, entry)
 
     if (fs.statSync(name).isDirectory()) newCodes.push(entry)
   })
 
-  newCode = (new locale.Locales(newCode).best(new locale.Locales(newCodes, 'default'))).toString()
+  newCode = (new locale.Locales(newCode).best(new locale.Locales(newCodes, defaultCode))).toString()
   if (newCodes.indexOf(newCode) === -1) throw new Error(newPath + ': no such locale as ' + newCode)
 
   localeInfo = [ newCode, newCodes, newPath ]
