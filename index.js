@@ -15,9 +15,9 @@ let localeInfo = [ undefined, undefined, undefined ]
 try {
   const parts = path.parse(fs.readlinkSync(path.join(defaultPath, defaultCode)))
 
-  if (!parts.dir) defaultCode = parts.name
+  defaultCode = parts.dir ? 'en' : parts.name
 } catch (ex) {
-  console.log('loser')
+  defaultCode = 'en'
 }
 
 function getLocaleInfo () {
@@ -55,8 +55,6 @@ function setLocaleSync (newCode, newPath) {
     newCode = localeInfo[0]
   }
 
-  if (fs.statSync(path.join(newPath, defaultCode)).isDirectory()) newCodes.push(defaultCode)
-
   fs.readdirSync(newPath).forEach((entry) => {
     if ((entry === defaultCode) || (entry === 'default')) return
 
@@ -64,6 +62,9 @@ function setLocaleSync (newCode, newPath) {
 
     if (fs.statSync(name).isDirectory()) newCodes.push(entry)
   })
+
+  newCodes.sort()
+  if (fs.statSync(path.join(newPath, defaultCode)).isDirectory()) newCodes.splice(0, 0, defaultCode)
 
   newCode = (new locale.Locales(newCode).best(new locale.Locales(newCodes, defaultCode))).toString()
   if (newCodes.indexOf(newCode) === -1) throw new Error(newPath + ': no such locale as ' + newCode)
