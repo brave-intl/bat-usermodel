@@ -295,7 +295,6 @@ function NBWordVec (wordVec, matrix, priorvecs) {
 }
 
 function logisticRegression(featVec, weights) {
-
   if (0 in featVec) {
     throw new Error("You should not use 0 as feature name. This is reserved for intercept term of logistic regression.")
   }
