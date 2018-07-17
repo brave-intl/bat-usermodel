@@ -8,6 +8,7 @@ const predictions = um.wrappedJSONReadSync('./test//data/predictions.json').data
 
 const matrix = um.getMatrixDataSync()
 const priorvecs = um.getPriorDataSync()
+const notificationWeights = um.getNotificationsModel()
 
 function itTestNB (i) {
   const label = predictions[i].label
@@ -25,5 +26,28 @@ describe('Check NB predictions', function () {
     for (let i = 0; i < predictions.length; i++) {
       itTestNB(i)
     }
+  })
+})
+
+describe('Check Logistic Regression', function () {
+  it('Notification Model returns scores', function() {
+    const featureVector = {
+      "test1": 0.1,
+      "test2": 0.3
+    }
+
+    assert.strictEqual(um.notificationScore(featureVector, notificationWeights), 0.7502601055951177)
+  })
+
+  it("Exception is thrown when intercept is overwritten", function() {
+    const featureVector = {
+      0: 0.0,
+      "test1": 0.1,
+      "test2": 0.3
+    }
+    
+    assert.throws(function() {
+      um.notificationScore(featureVector, notificationWeights)
+    }, Error)
   })
 })
