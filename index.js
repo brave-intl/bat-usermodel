@@ -72,12 +72,44 @@ function matrixFileLocation (locale, rootPath) {
   return path.join(localeInfo[2], localeInfo[0], 'logPwGc')
 }
 
+function adsRelevanceModelLocation (locale, rootPath) {
+  setLocaleSync(locale, rootPath)
+
+  return path.join(localeInfo[2], localeInfo[0], 'adsRelevanceModel')
+}
+
+function notificationModelLocation (locale, rootPath) {
+  setLocaleSync(locale, rootPath)
+
+  return path.join(localeInfo[2], localeInfo[0], 'notificationModel')
+}
+
 function getPriorDataSync (locale, rootPath) {
   return wrappedJSONReadSync(priorFileLocation(locale, rootPath))
 }
 
 function getMatrixDataSync (locale, rootPath) {
   return wrappedJSONReadSync(matrixFileLocation(locale, rootPath))
+}
+
+function getAdsRelevanceModel (locale, rootPath) {
+  return wrappedJSONReadSync(adsRelevanceModelLocation(locale, rootPath))
+}
+
+function getNotificationsModel (locale, rootPath) {
+  const model = wrappedJSONReadSync(notificationModelLocation(locale, rootPath))
+
+  if (model.names.length != model.weights.length) {
+      throw new Error("Model " + rootPath + " is not valid. Features don't match weights.")
+  }
+
+  // extract the weights
+  let weights = {0: model.intercept}
+  for (let i = 0; i < model.names.length; i++) {
+    weights[model.names[i]] = model.weights[i]
+  }
+
+  return weights
 }
 
 function wrappedJSONReadSync (filepath, comment = '') {
@@ -262,6 +294,25 @@ function NBWordVec (wordVec, matrix, priorvecs) {
   return scoreCountedStems(matrix, priorvecs['priors'], roll) // 80ms
 }
 
+function logisticRegression(featVec, weights) {
+
+  if (0 in featVec) {
+    throw new Error("You should not use 0 as feature name. This is reserved for intercept term of logistic regression.")
+  }
+
+  // simple logistic regression
+  let sum = weights[0]
+  Object.keys(featVec).forEach( feature => {
+    sum += weights[feature]
+  })
+  
+  return 1.0/(1.0 + Math.exp(-sum))
+}
+
+function notificationScore (featVec, weights) {
+  return logisticRegression(featVec, weights)
+}
+
 function stemWords (words) {
   // 2018.01.12 scott: mvp should use lower-case
   return words.map(w => stemmer(w.toLowerCase()))
@@ -307,7 +358,10 @@ module.exports = {
   matrixFileLocation: matrixFileLocation,
   getPriorDataSync: getPriorDataSync,
   getMatrixDataSync: getMatrixDataSync,
+  getNotificationsModel: getNotificationsModel,
   wrappedJSONReadSync: wrappedJSONReadSync,
+
+  notificationScore: notificationScore,
 
 // analysis
   textBlobIntoWordVec: textBlobIntoWordVec,
