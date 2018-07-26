@@ -31,23 +31,29 @@ describe('Check NB predictions', function () {
 
 describe('Check Logistic Regression', function () {
   it('Notification Model returns scores', function() {
-    const featureVector = {
-      "test1": 0.1,
-      "test2": 0.3
-    }
+    const featureVector = new Map()
+    featureVector.set("test1", 0.1)
+    featureVector.set("test2", 0.3)
 
-    assert.strictEqual(um.notificationScore(featureVector, notificationWeights), 0.7502601055951177)
+    assert.strictEqual(um.logisticRegression(featureVector, notificationWeights), 0.6547534606063192)
   })
 
   it("Exception is thrown when intercept is overwritten", function() {
-    const featureVector = {
-      0: 0.0,
-      "test1": 0.1,
-      "test2": 0.3
-    }
+    const featureVector = new Map()
+    featureVector.set(0, 123)
+    featureVector.set("test1", 0.1)
+    featureVector.set("test2", 0.3)
     
     assert.throws(function() {
-      um.notificationScore(featureVector, notificationWeights)
+      um.logisticRegression(featureVector, notificationWeights)
+    }, Error)
+  })
+
+  it("Exception is thrown when feature vector is not a map", function() {
+    const featureVector = {}
+    
+    assert.throws(function() {
+      um.logisticRegression(featureVector, notificationWeights)
     }, Error)
   })
 })
