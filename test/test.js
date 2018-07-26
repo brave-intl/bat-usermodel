@@ -51,7 +51,7 @@ describe('Check Logistic Regression', function () {
 
   it("Exception is thrown when feature vector is not a map", function() {
     const featureVector = {}
-    
+
     assert.throws(function() {
       um.logisticRegression(featureVector, notificationWeights)
     }, Error)
