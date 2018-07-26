@@ -93,7 +93,19 @@ function getMatrixDataSync (locale, rootPath) {
 }
 
 function getAdsRelevanceModel (locale, rootPath) {
-  return wrappedJSONReadSync(adsRelevanceModelLocation(locale, rootPath))
+  const model = wrappedJSONReadSync(adsRelevanceModelLocation(locale, rootPath))
+
+  if (model.names.length != model.weights.length) {
+      throw new Error("Model " + rootPath + " is not valid. Features don't match weights.")
+  }
+
+  // extract the weights
+  let weights = {0: model.intercept}
+  for (let i = 0; i < model.names.length; i++) {
+    weights[model.names[i]] = model.weights[i]
+  }
+
+  return weights
 }
 
 function getNotificationsModel (locale, rootPath) {
@@ -295,21 +307,24 @@ function NBWordVec (wordVec, matrix, priorvecs) {
 }
 
 function logisticRegression(featVec, weights) {
-  if (0 in featVec) {
+  if (!(featVec instanceof Map)) {
+    throw new Error("featVec should be a Map")  
+  }
+
+  if (featVec.has(0)) {
     throw new Error("You should not use 0 as feature name. This is reserved for intercept term of logistic regression.")
   }
 
   // simple logistic regression
   let sum = weights[0]
-  Object.keys(featVec).forEach( feature => {
-    sum += weights[feature]
-  })
+  for (let feature of featVec.keys()) {
+    if (!(feature in weights)) {
+      throw new Error("Feature " + feature + " is not part of the model.")
+    }
+    sum += featVec.get(feature)*weights[feature]
+  }
   
   return 1.0/(1.0 + Math.exp(-sum))
-}
-
-function notificationScore (featVec, weights) {
-  return logisticRegression(featVec, weights)
 }
 
 function stemWords (words) {
@@ -360,7 +375,8 @@ module.exports = {
   getNotificationsModel: getNotificationsModel,
   wrappedJSONReadSync: wrappedJSONReadSync,
 
-  notificationScore: notificationScore,
+  logisticRegression: logisticRegression,
+  getAdsRelevanceModel: getAdsRelevanceModel,
 
 // analysis
   textBlobIntoWordVec: textBlobIntoWordVec,
