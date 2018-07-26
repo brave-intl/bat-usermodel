@@ -3,7 +3,9 @@ BAT Ad User Model
 
 This is a work in progress. Comments welcome, of course.
 
+The usermodel contain an implementation of Naive Bayes and Logistic Regression.
 The Naive Bayes fit uses multinomial distribution with a stopword list.
+The Logistic Regression uses a feature vector and weights to return a probability value.
 
 The resulting data files are all log probabilities with 5 significant digits.
 
@@ -11,8 +13,9 @@ The resulting data files are all log probabilities with 5 significant digits.
 The `locales/` directory contains a directory for each locale dataset.
 The default list (`locales/default`) uses the standard english language stopword list.
 
-Each dataset consists of two files, `prior.js` and `logPwGc.js`.
+Each dataset consists of the floowing files:
 
+## `prior.js`
 The `prior.js` file looks like this:
 
         module.exports =
@@ -30,6 +33,7 @@ The entries in the `names` and `priors` arrays correspond to pairs, e.g.,
         , priors: ] -1.0988, -1.0981, -1.0987 ]
         }
 
+## `logPwGc.js`
 The `logPwGc.js` file looks like this:
 
         module.exports =
@@ -56,6 +60,12 @@ to minify the `prior.js` and `logPwGc.js` files for faster loading.
 
 For s better understanding of the text analysis approach,
 take a look at the [quanteda](https://docs.quanteda.io/) package.
+
+## `adsRelevance.js` and `notificationModel.js`
+
+This is a logistic regression model that contains feature `names`, the `weights` and the `intercept` term.
+
+`adsRelevance.js` will be used for scoring relevance of Ads and `notificationModel.js` is a placeholder model for introducing a logistic regression model for deciding whether to show or not a notification.
 
 ## Taxonomies
 The class space is flat;
@@ -139,7 +149,7 @@ it mut be made before either of these two calls is made:
         deriveCategoryScores
         NBWordVec
 
-# Future Releaes
+# Future Release
 Future revisions may add asynchronous calls.
 
 ## Log Probabilities
