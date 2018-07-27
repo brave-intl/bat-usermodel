@@ -112,8 +112,8 @@ function getMatrixDataSync (locale, rootPath) {
 function getAdsRelevanceModel (locale, rootPath) {
   const model = wrappedJSONReadSync(adsRelevanceModelLocation(locale, rootPath))
 
-  if (model.names.length != model.weights.length) {
-      throw new Error("Model " + rootPath + " is not valid. Features don't match weights.")
+  if (model.names.length !== model.weights.length) {
+    throw new Error('Model ' + rootPath + ' is not valid. Features don\'t match weights.')
   }
 
   // extract the weights
@@ -128,8 +128,8 @@ function getAdsRelevanceModel (locale, rootPath) {
 function getNotificationsModel (locale, rootPath) {
   const model = wrappedJSONReadSync(notificationModelLocation(locale, rootPath))
 
-  if (model.names.length != model.weights.length) {
-      throw new Error("Model " + rootPath + " is not valid. Features don't match weights.")
+  if (model.names.length !== model.weights.length) {
+    throw new Error('Model ' + rootPath + ' is not valid. Features don\'t match weights.')
   }
 
   // extract the weights
@@ -226,7 +226,7 @@ function getZeroesVector (width) {
 }
 
 function scoreVectorFromStem (matrix, stem, count) {
-    // if the lookup doesn't exist, then skip it or add zeroes vector
+  // if the lookup doesn't exist, then skip it or add zeroes vector
   let width = getKeyedMatrixWidth(matrix)
   let vector = getZeroesVector(width)
 
@@ -296,7 +296,7 @@ function logLikCalc (matrix, roll) {
 //
 function scoreCountedStems (matrix, prior, roll) {
   let loglik = logLikCalc(matrix, roll) // separated for future use
-  let logpostlik = vectorAdd(loglik, prior)  // log post likelihood; may kill this eventually
+  let logpostlik = vectorAdd(loglik, prior) // log post likelihood; may kill this eventually
   let prob = logLikToProb(logpostlik)
   return prob
 }
@@ -323,25 +323,25 @@ function NBWordVec (wordVec, matrix, priorvecs) {
   return scoreCountedStems(matrix, priorvecs['priors'], roll) // 80ms
 }
 
-function logisticRegression(featVec, weights) {
+function logisticRegression (featVec, weights) {
   if (!(featVec instanceof Map)) {
-    throw new Error("featVec should be a Map")  
+    throw new Error('featVec should be a Map')
   }
 
   if (featVec.has(0)) {
-    throw new Error("You should not use 0 as feature name. This is reserved for intercept term of logistic regression.")
+    throw new Error('You should not use 0 as feature name. This is reserved for intercept term of logistic regression.')
   }
 
   // simple logistic regression
   let sum = weights[0]
   for (let feature of featVec.keys()) {
     if (!(feature in weights)) {
-      throw new Error("Feature " + feature + " is not part of the model.")
+      throw new Error('Feature ' + feature + ' is not part of the model.')
     }
-    sum += featVec.get(feature)*weights[feature]
+    sum += featVec.get(feature) * weights[feature]
   }
-  
-  return 1.0/(1.0 + Math.exp(-sum))
+
+  return 1.0 / (1.0 + Math.exp(-sum))
 }
 
 function stemWords (words) {
@@ -376,11 +376,11 @@ function getSampleAdFeed () {
 }
 
 module.exports = {
-// constants (not really sure why these are here)
+  // constants (not really sure why these are here)
   minimumWordsToClassify: minimumWordsToClassify,
   maximumWordsToClassify: maximumWordsToClassify,
 
-// data files
+  // data files
 
   getLocaleInfo: getLocaleInfo,
   getLocalesSync: getLocalesSync,
@@ -395,7 +395,7 @@ module.exports = {
   logisticRegression: logisticRegression,
   getAdsRelevanceModel: getAdsRelevanceModel,
 
-// analysis
+  // analysis
   textBlobIntoWordVec: textBlobIntoWordVec,
   processWordsFromHTML: processWordsFromHTML,
   vectorIndexOfMax: vectorIndexOfMax,
