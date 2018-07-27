@@ -89,12 +89,56 @@ function matrixFileLocation (locale, rootPath) {
   return path.join(localeInfo[2], localeInfo[0], 'logPwGc')
 }
 
+function adsRelevanceModelLocation (locale, rootPath) {
+  setLocaleSync(locale, rootPath)
+
+  return path.join(localeInfo[2], localeInfo[0], 'adsRelevanceModel')
+}
+
+function notificationModelLocation (locale, rootPath) {
+  setLocaleSync(locale, rootPath)
+
+  return path.join(localeInfo[2], localeInfo[0], 'notificationModel')
+}
+
 function getPriorDataSync (locale, rootPath) {
   return wrappedJSONReadSync(priorFileLocation(locale, rootPath))
 }
 
 function getMatrixDataSync (locale, rootPath) {
   return wrappedJSONReadSync(matrixFileLocation(locale, rootPath))
+}
+
+function getAdsRelevanceModel (locale, rootPath) {
+  const model = wrappedJSONReadSync(adsRelevanceModelLocation(locale, rootPath))
+
+  if (model.names.length !== model.weights.length) {
+    throw new Error('Model ' + rootPath + ' is not valid. Features don\'t match weights.')
+  }
+
+  // extract the weights
+  let weights = {0: model.intercept}
+  for (let i = 0; i < model.names.length; i++) {
+    weights[model.names[i]] = model.weights[i]
+  }
+
+  return weights
+}
+
+function getNotificationsModel (locale, rootPath) {
+  const model = wrappedJSONReadSync(notificationModelLocation(locale, rootPath))
+
+  if (model.names.length !== model.weights.length) {
+    throw new Error('Model ' + rootPath + ' is not valid. Features don\'t match weights.')
+  }
+
+  // extract the weights
+  let weights = {0: model.intercept}
+  for (let i = 0; i < model.names.length; i++) {
+    weights[model.names[i]] = model.weights[i]
+  }
+
+  return weights
 }
 
 function wrappedJSONReadSync (filepath, comment = '') {
@@ -182,7 +226,7 @@ function getZeroesVector (width) {
 }
 
 function scoreVectorFromStem (matrix, stem, count) {
-    // if the lookup doesn't exist, then skip it or add zeroes vector
+  // if the lookup doesn't exist, then skip it or add zeroes vector
   let width = getKeyedMatrixWidth(matrix)
   let vector = getZeroesVector(width)
 
@@ -252,7 +296,7 @@ function logLikCalc (matrix, roll) {
 //
 function scoreCountedStems (matrix, prior, roll) {
   let loglik = logLikCalc(matrix, roll) // separated for future use
-  let logpostlik = vectorAdd(loglik, prior)  // log post likelihood; may kill this eventually
+  let logpostlik = vectorAdd(loglik, prior) // log post likelihood; may kill this eventually
   let prob = logLikToProb(logpostlik)
   return prob
 }
@@ -277,6 +321,27 @@ function NBWordVec (wordVec, matrix, priorvecs) {
   let stems = stemWords(wordVec)
   let roll = rollUpStringsWithCount(stems)// 7.3ms
   return scoreCountedStems(matrix, priorvecs['priors'], roll) // 80ms
+}
+
+function logisticRegression (featVec, weights) {
+  if (!(featVec instanceof Map)) {
+    throw new Error('featVec should be a Map')
+  }
+
+  if (featVec.has(0)) {
+    throw new Error('You should not use 0 as feature name. This is reserved for intercept term of logistic regression.')
+  }
+
+  // simple logistic regression
+  let sum = weights[0]
+  for (let feature of featVec.keys()) {
+    if (!(feature in weights)) {
+      throw new Error('Feature ' + feature + ' is not part of the model.')
+    }
+    sum += featVec.get(feature) * weights[feature]
+  }
+
+  return 1.0 / (1.0 + Math.exp(-sum))
 }
 
 function stemWords (words) {
@@ -311,11 +376,11 @@ function getSampleAdFeed () {
 }
 
 module.exports = {
-// constants (not really sure why these are here)
+  // constants (not really sure why these are here)
   minimumWordsToClassify: minimumWordsToClassify,
   maximumWordsToClassify: maximumWordsToClassify,
 
-// data files
+  // data files
 
   getLocaleInfo: getLocaleInfo,
   getLocalesSync: getLocalesSync,
@@ -324,9 +389,13 @@ module.exports = {
   matrixFileLocation: matrixFileLocation,
   getPriorDataSync: getPriorDataSync,
   getMatrixDataSync: getMatrixDataSync,
+  getNotificationsModel: getNotificationsModel,
   wrappedJSONReadSync: wrappedJSONReadSync,
 
-// analysis
+  logisticRegression: logisticRegression,
+  getAdsRelevanceModel: getAdsRelevanceModel,
+
+  // analysis
   textBlobIntoWordVec: textBlobIntoWordVec,
   processWordsFromHTML: processWordsFromHTML,
   vectorIndexOfMax: vectorIndexOfMax,
