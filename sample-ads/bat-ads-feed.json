@@ -1266,12 +1266,6 @@
       ],
       "science": [
          {
-            "advertiser": "ZDNet",
-            "notificationText": "ZDNet For Science News - All New Updates | search.zdnet.com ",
-            "notificationURL": "https://search.zdnet.com/web?q=current%20science%20news&src=iv&qsrc=0&qm=__iv_m_b_c_77859182188667_k_77859215772541_g_1245746740625811_p_2_b_bb_d_c_vi__&tt=T0026708&au=11681272&msclkid=fc8a8cc2e6141fad6afad6ba17d659c6",
-            "uuid": "8c88ab85-6010-44d1-bd7d-668b080b5908"
-         },
-         {
             "advertiser": "Magazine Art",
             "notificationText": "Science and Mechanics / Everyday Science and Mechanics",
             "notificationURL": "http://www.magazineart.org/main.php/v/technical/sciencemechanics/",
